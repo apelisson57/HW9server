@@ -34,7 +34,7 @@ public class MultithreadedServerTests extends TestCase {
 	 }    
      
         
-     @Test
+     //@Test
 	 public void testIncrement() throws IOException {
 	
 		// initialize accounts 
