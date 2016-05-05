@@ -7,17 +7,17 @@ import java.util.concurrent.*;
 
 class Cache {
 	Account acc;
-	private int initValue = 0;
+	private int initValue;
+	private int currentValue;
 	private boolean isItRead;
 	private boolean isItWritten;
-	private int current;
 	
 	public Cache(Account a) {
 		acc = a;
 		initValue = a.peek();
 		isItRead = false;
 		isItWritten = false;
-		current = initValue;
+		currentValue = initValue;
 	}
 	
 	public void openIfNeeded() throws TransactionAbortException {
@@ -33,7 +33,7 @@ class Cache {
 	}
 	
 	public void write(int value) {
-		current = value;
+		currentValue = value;
 	}
 	
 	public void openForReading() {
@@ -42,6 +42,14 @@ class Cache {
 	
 	public void openForWriting() {
 		isItWritten = true;
+	}
+	
+	public int getCurrentValue() {
+		return currentValue;
+	}
+	
+	public int getInitValue() {
+		return initValue;
 	}
 }
 
