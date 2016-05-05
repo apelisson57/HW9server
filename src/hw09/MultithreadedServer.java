@@ -29,6 +29,10 @@ class Cache {
 		}
 	}
 	
+	public void closeAccount() {
+		acc.close();
+	}
+
 	
 	public int peekAccount() {
 		return acc.peek();
@@ -52,8 +56,12 @@ class Cache {
 		current = value;
 	}
 	
-	public void closeAccount() {
-		acc.close();
+	public void openForReading() {
+		isItRead = true;
+	}
+	
+	public void openForWriting() {
+		isItWritten = true;
 	}
 }
 
@@ -89,7 +97,7 @@ class Task implements Runnable {
      * 
      * Functions:
      * 
-     * open_if_necessary():
+     * openIfNeeded():
      * If account is open for writing, ope
      * Create cache objects in run!!!!
      * Code stays the same, we just manipulate cache instead of account
@@ -100,7 +108,7 @@ class Task implements Runnable {
      * Phase 1: open all accounts, "climbing phase"
      * within try block
      * for (i = A; i <= Zl; i++) {
-     * 		C[i].open_if_needed();
+     * 		C[i].openIfNeeded();
      * }
      * catch exception
      * if exception is caught, conflict at letter L, 
@@ -192,33 +200,27 @@ class Task implements Runnable {
     }
 }
 
-public class MultithreadedServer {
-	
-	
+public class MultithreadedServer {	
 	// requires: accounts != null && accounts[i] != null (i.e., accounts are properly initialized)
 	// modifies: accounts
 	// effects: accounts change according to transactions in inputFile
     public static void runServer(String inputFile, Account accounts[])
         throws IOException {
     	
-    	
         // read transactions from input file
         String line;
         BufferedReader input =
             new BufferedReader(new FileReader(inputFile));
 
-        // TO DO: you will need to create an Executor and then modify the
-        // following loop to feed tasks to the executor instead of running them
-        // directly. 
+        // Create an Executor and then feed tasks to the executor instead of running them directly. 
+        
+        Executor e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
-        	
-        	Executor e = Executors.newFixedThreadPool(constants.numLetters);
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
         
         input.close();
-
     }
 }
