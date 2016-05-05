@@ -20,11 +20,11 @@ class Cache {
 		current = initValue;
 	}
 	
-	public void open_if_needed() throws TransactionAbortException {
+	public void openIfNeeded() throws TransactionAbortException {
 		acc.open(false);	
 	}
 	
-	public void close_acc() {
+	public void closeAccount() {
 		acc.close();
 	}
 	
@@ -36,8 +36,12 @@ class Cache {
 		current = value;
 	}
 	
-	public void closeAccount() {
-		acc.close();
+	public void openForReading() {
+		isItRead = true;
+	}
+	
+	public void openForWriting() {
+		isItWritten = true;
 	}
 }
 
@@ -73,7 +77,7 @@ class Task implements Runnable {
      * 
      * Functions:
      * 
-     * open_if_necessary():
+     * openIfNeeded():
      * If account is open for writing, ope
      * Create cache objects in run!!!!
      * Code stays the same, we just manipulate cache instead of account
@@ -84,7 +88,7 @@ class Task implements Runnable {
      * Phase 1: open all accounts, "climbing phase"
      * within try block
      * for (i = A; i <= Zl; i++) {
-     * 		C[i].open_if_needed();
+     * 		C[i].openIfNeeded();
      * }
      * catch exception
      * if exception is caught, conflict at letter L, 
