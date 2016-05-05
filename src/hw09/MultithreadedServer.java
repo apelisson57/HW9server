@@ -20,19 +20,35 @@ class Cache {
 		current = initValue;
 	}
 	
-	public void open_if_needed() throws TransactionAbortException {
-		acc.open(false);	
+	public void openIfNeeded() throws TransactionAbortException {
+		try {
+			acc.open(false);	
+		} catch (TransactionAbortException e) {
+			throw e;
+			//throw new TransactionAbortException();
+		}
 	}
 	
-	public void close_acc() {
-		acc.close();
-	}
 	
 	public int peekAccount() {
 		return acc.peek();
 	}
 	
+	public void verifyAccount() throws TransactionAbortException {
+		try {
+			
+			// not sure if this should be current or acc.peek()? Will find out eventually
+			acc.verify(current);
+			
+		} catch (TransactionAbortException e) {
+			throw e;
+			//throw new TransactionAbortException();
+		}
+	}
+	
 	public void write(int value) {
+		
+		// shouldn't this change acc.value?
 		current = value;
 	}
 	
@@ -161,13 +177,16 @@ class Task implements Runnable {
                 else
                     throw new InvalidTransactionError();
             }
+            
+            /*
             try {
                 
             } catch (TransactionAbortException e) {
                 // won't happen in sequential version
             }
-            lhs.write(rhs);
-            lhs.closeAccount();
+            */
+            //lhs.write(rhs);
+            //lhs.closeAccount();
         }
         System.out.println("commit: " + transaction);
     }
