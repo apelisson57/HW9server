@@ -173,33 +173,27 @@ class Task implements Runnable {
     }
 }
 
-public class MultithreadedServer {
-	
-	
+public class MultithreadedServer {	
 	// requires: accounts != null && accounts[i] != null (i.e., accounts are properly initialized)
 	// modifies: accounts
 	// effects: accounts change according to transactions in inputFile
     public static void runServer(String inputFile, Account accounts[])
         throws IOException {
     	
-    	
         // read transactions from input file
         String line;
         BufferedReader input =
             new BufferedReader(new FileReader(inputFile));
 
-        // TO DO: you will need to create an Executor and then modify the
-        // following loop to feed tasks to the executor instead of running them
-        // directly. 
+        // Create an Executor and then feed tasks to the executor instead of running them directly. 
+        
+        Executor e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
-        	
-        	Executor e = Executors.newFixedThreadPool(constants.numLetters);
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
         
         input.close();
-
     }
 }
