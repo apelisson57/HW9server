@@ -27,6 +27,18 @@ class Cache {
 	public void close_acc() {
 		acc.close();
 	}
+	
+	public int peekAccount() {
+		return acc.peek();
+	}
+	
+	public void write(int value) {
+		current = value;
+	}
+	
+	public void closeAccount() {
+		acc.close();
+	}
 }
 
 // TO DO: Task is currently an ordinary class.
@@ -97,12 +109,9 @@ class Task implements Runnable {
         transaction = trans;
     }
     
-    // TO DO: parseAccount currently returns a reference to an account.
-    // You probably want to change it to return a reference to an
-    // account *cache* instead.
-    // parseAccount returns account cache
+    // Return a reference to an account *cache* instead of an account.
     //
-    private Account parseAccount(String name) {
+    private Cache parseAccount(String name) {
         int accountNum = (int) (name.charAt(0)) - (int) 'A';
         if (accountNum < A || accountNum > Z)
             throw new InvalidTransactionError();
@@ -113,7 +122,7 @@ class Task implements Runnable {
             accountNum = (accounts[accountNum].peek() % numLetters);
             a = accounts[accountNum];
         }
-        return a;
+        return new Cache(a);
     }
 
     private int parseAccountOrNum(String name) {
@@ -121,7 +130,7 @@ class Task implements Runnable {
         if (name.charAt(0) >= '0' && name.charAt(0) <= '9') {
             rtn = new Integer(name).intValue();
         } else {
-            rtn = parseAccount(name).peek();
+            rtn = parseAccount(name).peekAccount();
         }
         return rtn;
     }
@@ -140,7 +149,7 @@ class Task implements Runnable {
             String[] words = commands[i].trim().split("\\s");
             if (words.length < 3)
                 throw new InvalidTransactionError();
-            Account lhs = parseAccount(words[0]);
+            Cache lhs = parseAccount(words[0]);
             if (!words[1].equals("="))
                 throw new InvalidTransactionError();
             int rhs = parseAccountOrNum(words[2]);
@@ -157,8 +166,8 @@ class Task implements Runnable {
             } catch (TransactionAbortException e) {
                 // won't happen in sequential version
             }
-            lhs.update(rhs);
-            lhs.close();
+            lhs.write(rhs);
+            lhs.closeAccount();
         }
         System.out.println("commit: " + transaction);
     }
