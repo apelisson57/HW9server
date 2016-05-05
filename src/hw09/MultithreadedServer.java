@@ -20,15 +20,8 @@ class Cache {
 		current = initValue;
 	}
 	
-	public void open_if_needed() {
-		throws TransactionAbortException {
-			try {
-				acc.open(false); 
-			} catch (TransactionAbortException e) {
-				throw e;
-			}
-		}
-		
+	public void open_if_needed() throws TransactionAbortException {
+		acc.open(false);	
 	}
 	
 	public void close_acc() {
