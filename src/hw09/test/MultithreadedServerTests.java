@@ -34,7 +34,7 @@ public class MultithreadedServerTests extends TestCase {
 	 }    
      
         
-     //@Test
+     @Test
 	 public void testIncrement() throws IOException {
 	
 		// initialize accounts 
@@ -53,5 +53,25 @@ public class MultithreadedServerTests extends TestCase {
 
 	 }
 	 	  	 
-	
+     @Test
+     public void testDoubleIndirection() throws IOException {
+         // initialize accounts
+         accounts = new Account[numLetters];
+         accounts[0] = new Account(0);   // A = 0
+         accounts[1] = new Account(1);   // B = 1
+         accounts[5] = new Account(9);   // F = 9
+         accounts[9] = new Account(42);  // J = 42
+         accounts[11] = new Account(5);  // L = 5
+         accounts[16] = new Account(37); // Q = 37
+         
+         MultithreadedServer.runServer("src/hw09/data/doubleIndirection", accounts);
+         
+         // assert correct account values
+         assertEquals("Account A differs",9,accounts[0].getValue());
+         assertEquals("Account B differs",51,accounts[1].getValue());
+         assertEquals("Account F differs",9,accounts[5].getValue());
+         assertEquals("Account J differs",42,accounts[9].getValue());
+         assertEquals("Account L differs",5,accounts[11].getValue());
+         assertEquals("Account Q differs",37,accounts[16].getValue());
+     }
 }
