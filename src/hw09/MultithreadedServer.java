@@ -165,8 +165,6 @@ class Task implements Runnable {
     	// do a while true loop for everything in run
     	// then do same as before but write on cache
     	
-    
-    
         String[] commands = transaction.split(";");
 
         for (int i = 0; i < commands.length; i++) {
@@ -186,16 +184,91 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
             }
             
-            /*
-            try {
-                
-            } catch (TransactionAbortException e) {
-                // won't happen in sequential version
-            }
-            */
-            //lhs.write(rhs);
-            //lhs.closeAccount();
+            
         }
+        
+        /*
+         * I've added some of the basic logic here but I'm still
+         * confused about how to create the Cache array she mentioned
+         * In office hours. Going to send an email, hopefully 
+         * someone responds...
+         */
+        
+        Cache[] caches = new Cache[accounts.length];
+        
+        //////////////////////////////
+        /// MAIN LOOP ////////////////
+        //////////////////////////////
+        
+        while (true) {
+        
+	        //
+	        // Phase 1: Opening all caches for reading
+	        //
+	        
+	        // try to open all caches
+	    	int c0 = 0;
+	    	while (c0 < caches.length) {
+	    		
+	    		try {
+	    			caches[c0].openIfNeeded();
+	    		} catch (TransactionAbortException e) {
+	    			break;
+	    		}
+	    		c0++;
+	    	}
+	    	
+	    	// if exception is thrown, close all previos account
+	    	for (int i0 = 0; i0 < c0; i0++) {
+	    		caches[i0].closeAccount();
+	    	}
+	    	
+	    	if (c0 != caches.length) {
+	    		continue;
+	    	}
+	    	
+	    	//
+	        // Phase 2: Verifying all caches
+	        //
+	        
+	        // try to open all caches
+	    	int c1 = 0;
+	    	while (c1 < caches.length) {
+	    		
+	    		try {
+	    			caches[c1].verifyAccount();
+	    		} catch (TransactionAbortException e) {
+	    			break;
+	    		}
+	    		c1++;
+	    	}
+	    	
+	    	// if exception is thrown, close all previos account
+	    	for (int i1 = 0; i1 < c1; i1++) {
+	    		caches[i1].closeAccount();
+	    	}
+	    	
+	    	if (c1 != caches.length) {
+	    		continue;
+	    	}
+	    	
+	    	//
+	    	// Phase 3: Opening all accounts for writing
+	    	//
+	    	
+	    	// open, write to, and close all accounts
+	    	for (int c2 = 0; c2 < caches.length; c2++) {
+	    		
+	    		caches[c2].write(rhs); // i think this is correct?
+	    		caches[c2].closeAccount();
+	    	}
+	    	
+	    	break;
+	    	
+	    	
+        }
+
+        
         System.out.println("commit: " + transaction);
     }
 }
