@@ -3,7 +3,6 @@ package hw09;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.*;
 
 class Cache {
@@ -91,10 +90,9 @@ class Task implements Runnable {
         transaction = trans;
     }
     
-    // Returns an ArrayList specifying which Accounts are accessed by indirection.
+    // Return a reference to an account *cache* instead of an account.
     //
-    private ArrayList<Integer> parseAccount(String name) {
-    	ArrayList<Integer> accountsRead = new ArrayList<Integer>();
+    private Cache parseAccount(String name) {
         int accountNum = (int) (name.charAt(0)) - (int) 'A';
         if (accountNum < A || accountNum > Z)
             throw new InvalidTransactionError();
@@ -102,13 +100,8 @@ class Task implements Runnable {
             if (name.charAt(i) != '*')
                 throw new InvalidTransactionError();
             accountNum = (accounts[accountNum].peek() % numLetters);
-            accountsRead.add(accountNum);
         }
-        // Case of no indirection
-        if (accountsRead.isEmpty()) {
-        	accountsRead.add(accountNum);
-        }
-        return accountsRead;
+        return caches[accountNum];
     }
 
     private int parseAccountOrNum(String name) {
@@ -116,8 +109,7 @@ class Task implements Runnable {
         if (name.charAt(0) >= '0' && name.charAt(0) <= '9') {
             rtn = new Integer(name).intValue();
         } else {
-        	ArrayList<Integer> readAccounts = parseAccount(name);
-            rtn = caches[readAccounts.get(readAccounts.size() - 1)].peekAccount();
+            rtn = parseAccount(name).peekAccount();
         }
         return rtn;
     }
@@ -131,8 +123,7 @@ class Task implements Runnable {
             String[] words = commands[i].trim().split("\\s");
             if (words.length < 3)
                 throw new InvalidTransactionError();
-            ArrayList<Integer> writtenAccounts = parseAccount(words[0]);
-            Cache lhs = caches[writtenAccounts.get(writtenAccounts.size() - 1)];
+            Cache lhs = parseAccount(words[0]);
             if (!words[1].equals("="))
                 throw new InvalidTransactionError();
             int rhs = parseAccountOrNum(words[2]);
@@ -145,7 +136,6 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
             }
             lhs.markForWriting();
-            // TODO: obtain iterable data structure containing all rhs Accounts
             // TODO: mark each rhs cache for reading
         }
         
@@ -190,14 +180,13 @@ public class MultithreadedServer {
 
         // Create an Executor and then feed tasks to the executor instead of running them directly. 
         
-        ExecutorService e = Executors.newCachedThreadPool();
+        Executor e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
         
-        e.shutdown();        
         input.close();
     }
 }
