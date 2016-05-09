@@ -3,6 +3,7 @@ package hw09;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.*;
 
 class Cache {
@@ -20,6 +21,7 @@ class Cache {
 		currentValue = initialValue;
 	}
 	
+	// If a Cache is marked for reading or writing, its Account is opened appropriately.
 	public void openIfNeeded() throws TransactionAbortException {
 		if (isItRead) {
 			acc.open(false);
@@ -79,48 +81,6 @@ class Task implements Runnable {
     // you want to do, (1) open all accounts you need, for reading,
     // writing, or both, (2) verify all previously peeked-at values,
     // (3) perform all updates, and (4) close all opened accounts.
-    
-    /*
-     * Cache = copy of account object
-     * CACHE IS SEPARATE CLASS!!!!
-     * One field is pointer to account to account
-     * int readvalue
-     * boolean isitread
-     * boolean isitwritten
-     * int value
-     * 
-     * Functions:
-     * 
-     * openIfNeeded():
-     * If account is open for writing, ope
-     * Create cache objects in run!!!!
-     * Code stays the same, we just manipulate cache instead of account
-     * 
-     * 
-     * 
-     * Two phase commit
-     * Phase 1: open all accounts, "climbing phase"
-     * within try block
-     * for (i = A; i <= Zl; i++) {
-     * 		C[i].openIfNeeded();
-     * }
-     * catch exception
-     * if exception is caught, conflict at letter L, 
-     * close all accounts at L, clean_up() method, continue
-     * 
-     * Phase 2: Verify phase
-     * Releasing all the locks
-     * If verification fails, cleanup, continue, do phase 1 all over again
-     * 
-     * Phase 3: Write and close, cannot fail!!!
-     * Then break out of loop
-     * 
-     * EACH THREAD HAS ITS OWN CACHE
-     * 
-     * 
-     * Thread pool creates thread for us
-     * schedlue task by calling execute
-     */
 
     public Task(Account[] allAccounts, String trans) {
         accounts = allAccounts;
@@ -131,9 +91,10 @@ class Task implements Runnable {
         transaction = trans;
     }
     
-    // Return a reference to an account *cache* instead of an account.
+    // Returns an ArrayList specifying which Accounts are accessed by indirection.
     //
-    private Cache parseAccount(String name) {
+    private ArrayList<Integer> parseAccount(String name) {
+    	ArrayList<Integer> accountsRead = new ArrayList<Integer>();
         int accountNum = (int) (name.charAt(0)) - (int) 'A';
         if (accountNum < A || accountNum > Z)
             throw new InvalidTransactionError();
@@ -141,8 +102,13 @@ class Task implements Runnable {
             if (name.charAt(i) != '*')
                 throw new InvalidTransactionError();
             accountNum = (accounts[accountNum].peek() % numLetters);
+            accountsRead.add(accountNum);
         }
-        return caches[accountNum];
+        // Case of no indirection
+        if (accountsRead.isEmpty()) {
+        	accountsRead.add(accountNum);
+        }
+        return accountsRead;
     }
 
     private int parseAccountOrNum(String name) {
@@ -150,7 +116,8 @@ class Task implements Runnable {
         if (name.charAt(0) >= '0' && name.charAt(0) <= '9') {
             rtn = new Integer(name).intValue();
         } else {
-            rtn = parseAccount(name).peekAccount();
+        	ArrayList<Integer> readAccounts = parseAccount(name);
+            rtn = caches[readAccounts.get(readAccounts.size() - 1)].peekAccount();
         }
         return rtn;
     }
@@ -164,7 +131,8 @@ class Task implements Runnable {
             String[] words = commands[i].trim().split("\\s");
             if (words.length < 3)
                 throw new InvalidTransactionError();
-            Cache lhs = parseAccount(words[0]);
+            ArrayList<Integer> writtenAccounts = parseAccount(words[0]);
+            Cache lhs = caches[writtenAccounts.get(writtenAccounts.size() - 1)];
             if (!words[1].equals("="))
                 throw new InvalidTransactionError();
             int rhs = parseAccountOrNum(words[2]);
@@ -176,13 +144,8 @@ class Task implements Runnable {
                 else
                     throw new InvalidTransactionError();
             }
-            try {
-                
-            } catch (TransactionAbortException e) {
-                // won't happen in sequential version
-            }
-            lhs.write(rhs);
-            lhs.closeAccount();
+            lhs.markForWriting();
+            // TODO: mark each rhs cache for reading
         }
         
         while (true) {
@@ -205,7 +168,7 @@ class Task implements Runnable {
         	// TODO: Write to all accounts written to.
         	// TODO: Close all open accounts.
         	
-        	break;	// Success! Output commit message.
+        	break;	// Success! Output successful-write message.
         }
         
         System.out.println("commit: " + transaction);
