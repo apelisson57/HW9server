@@ -21,7 +21,12 @@ class Cache {
 	}
 	
 	public void openIfNeeded() throws TransactionAbortException {
-		acc.open(false);	
+		if (isItRead) {
+			acc.open(false);
+		}
+		if (isItWritten) {
+			acc.open(true);
+		}
 	}
 	
 	public void verifyAccount(int expectedValue) throws TransactionAbortException {
@@ -57,10 +62,6 @@ class Cache {
 	}
 }
 
-// TO DO: Task is currently an ordinary class.
-// You will need to modify it to make it a task,
-// so it can be given to an Executor thread pool.
-//
 class Task implements Runnable {
     private static final int A = constants.A;
     private static final int Z = constants.Z;
@@ -152,15 +153,10 @@ class Task implements Runnable {
     }
 
     public void run() {
-        // tokenize transaction
-    	
-    	// do a while true loop for everything in run
-    	// then do same as before but write on cache
-    	
-    
-    
+    	// tokenize transaction
         String[] commands = transaction.split(";");
 
+        // Parse each command in the transaction.
         for (int i = 0; i < commands.length; i++) {
             String[] words = commands[i].trim().split("\\s");
             if (words.length < 3)
