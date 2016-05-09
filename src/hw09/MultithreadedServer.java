@@ -185,6 +185,30 @@ class Task implements Runnable {
             lhs.write(rhs);
             lhs.closeAccount();
         }
+        
+        while (true) {
+        	// TODO: Carry out transactions in local cache.
+        	
+        	// TODO: Phase 1: Open all read/written accounts in global accounts array. 
+        	try {
+        		
+        	} catch (TransactionAbortException e) {
+        		// TODO: Close all open accounts.
+        		continue;
+        	}
+        	// TODO: Phase 2: Verify that all opened accounts have the correct values.  
+        	try {
+        		
+        	} catch (TransactionAbortException e) {
+        		// TODO: Close all open accounts.
+        		continue;
+        	}
+        	// TODO: Write to all accounts written to.
+        	// TODO: Close all open accounts.
+        	
+        	break;	// Success! Output commit message.
+        }
+        
         System.out.println("commit: " + transaction);
     }
 }
