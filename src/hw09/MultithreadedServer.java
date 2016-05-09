@@ -24,6 +24,10 @@ class Cache {
 		acc.open(false);	
 	}
 	
+	public void verifyAccount(int expectedValue) throws TransactionAbortException {
+		acc.verify(expectedValue);
+	}
+	
 	public void closeAccount() {
 		acc.close();
 	}
