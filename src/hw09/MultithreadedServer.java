@@ -21,12 +21,7 @@ class Cache {
 	}
 	
 	public void openIfNeeded() throws TransactionAbortException {
-		try {
-			acc.open(false);	
-		} catch (TransactionAbortException e) {
-			throw e;
-			//throw new TransactionAbortException();
-		}
+		acc.open(false);	
 	}
 	
 	public void closeAccount() {
@@ -39,20 +34,10 @@ class Cache {
 	}
 	
 	public void verifyAccount() throws TransactionAbortException {
-		try {
-			
-			// not sure if this should be current or acc.peek()? Will find out eventually
-			acc.verify(current);
-			
-		} catch (TransactionAbortException e) {
-			throw e;
-			//throw new TransactionAbortException();
-		}
+		acc.verify(current);
 	}
 	
 	public void write(int value) {
-		
-		// shouldn't this change acc.value?
 		current = value;
 	}
 	
@@ -222,7 +207,6 @@ class Task implements Runnable {
 	    	for (int i0 = 0; i0 < c0; i0++) {
 	    		caches[i0].closeAccount();
 	    	}
-	    	
 	    	if (c0 != caches.length) {
 	    		continue;
 	    	}
@@ -234,7 +218,6 @@ class Task implements Runnable {
 	        // try to open all caches
 	    	int c1 = 0;
 	    	while (c1 < caches.length) {
-	    		
 	    		try {
 	    			caches[c1].verifyAccount();
 	    		} catch (TransactionAbortException e) {
@@ -247,7 +230,6 @@ class Task implements Runnable {
 	    	for (int i1 = 0; i1 < c1; i1++) {
 	    		caches[i1].closeAccount();
 	    	}
-	    	
 	    	if (c1 != caches.length) {
 	    		continue;
 	    	}
@@ -262,13 +244,8 @@ class Task implements Runnable {
 	    		caches[c2].write(rhs); // i think this is correct?
 	    		caches[c2].closeAccount();
 	    	}
-	    	
 	    	break;
-	    	
-	    	
         }
-
-        
         System.out.println("commit: " + transaction);
     }
 }
