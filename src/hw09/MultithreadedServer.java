@@ -136,7 +136,15 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
             }
             lhs.markForWriting();
-            // TODO: mark each rhs cache for reading
+            for (int wordNum = 2; wordNum < words.length; wordNum++) {
+            	String word = words[wordNum];
+            	// word is not an operator
+                if ((!(word.equals("=") || word.equals("+") || word.equals("-"))) &&
+                		// word does not begin with a digit
+                		(!(word.charAt(0) >= '0' && word.charAt(0) <= '9'))) {
+                	// TODO: mark each rhs Cache for reading
+                }
+            }
         }
         
         while (true) {
