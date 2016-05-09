@@ -145,6 +145,7 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
             }
             lhs.markForWriting();
+            // TODO: obtain iterable data structure containing all rhs Accounts
             // TODO: mark each rhs cache for reading
         }
         
@@ -189,13 +190,14 @@ public class MultithreadedServer {
 
         // Create an Executor and then feed tasks to the executor instead of running them directly. 
         
-        Executor e = Executors.newCachedThreadPool();
+        ExecutorService e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
         
+        e.shutdown();        
         input.close();
     }
 }
