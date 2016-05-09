@@ -68,6 +68,7 @@ class Task implements Runnable {
     private static final int numLetters = constants.numLetters;
 
     private Account[] accounts;
+    private Cache[] caches;
     private String transaction;
 
     // TO DO: The sequential version of Task peeks at accounts
@@ -123,6 +124,10 @@ class Task implements Runnable {
 
     public Task(Account[] allAccounts, String trans) {
         accounts = allAccounts;
+        // Create a cache to wrap each account.
+        for (int accountNum = 0; accountNum < allAccounts.length; accountNum++) {
+        	caches[accountNum] = new Cache(allAccounts[accountNum]);
+        }
         transaction = trans;
     }
     
@@ -132,14 +137,12 @@ class Task implements Runnable {
         int accountNum = (int) (name.charAt(0)) - (int) 'A';
         if (accountNum < A || accountNum > Z)
             throw new InvalidTransactionError();
-        Account a = accounts[accountNum];
         for (int i = 1; i < name.length(); i++) {
             if (name.charAt(i) != '*')
                 throw new InvalidTransactionError();
             accountNum = (accounts[accountNum].peek() % numLetters);
-            a = accounts[accountNum];
         }
-        return new Cache(a);
+        return caches[accountNum];
     }
 
     private int parseAccountOrNum(String name) {
