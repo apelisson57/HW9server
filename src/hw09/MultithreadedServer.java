@@ -173,21 +173,30 @@ class Task implements Runnable {
         }
         
         while (true) {
-        	// TODO: Phase 1: Open all read/written accounts in global accounts array. 
         	try {
+        		
+        		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
+        			caches[cacheNum].openIfNeeded();
+        		}
         		
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
         		continue;
         	}
-        	// TODO: Phase 2: Verify that all opened accounts have the correct values.  
+        	 
         	try {
+        		
+        		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
+        			caches[cacheNum].verifyAccount();
+        		}
         		
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
         		continue;
         	}
-        	// TODO: Write to all accounts written to.
+        	for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
+        		caches[cacheNum].write();
+        	}
         	closeOpenAccounts();
         	
         	break;	// Success! Output successful-write message.
