@@ -62,6 +62,14 @@ class Cache {
 	public int getInitialValue() {
 		return initialValue;
 	}
+	
+	public boolean isRead() {
+		return isItRead;
+	}
+	
+	public boolean isWritten() {
+		return isItWritten;
+	}
 }
 
 class Task implements Runnable {
@@ -113,6 +121,10 @@ class Task implements Runnable {
             rtn = parseAccount(name).peekAccount();
         }
         return rtn;
+    }
+    
+    public void closeAllAccounts() {
+    	
     }
 
     public void run() {
