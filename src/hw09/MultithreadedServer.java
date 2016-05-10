@@ -43,10 +43,6 @@ class Cache {
 		return acc.peek();
 	}
 	
-	public void verifyAccount() throws TransactionAbortException {
-		acc.verify(current);
-	}
-	
 	public void write(int value) {
 		currentValue = value;
 	}
