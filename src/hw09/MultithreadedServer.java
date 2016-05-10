@@ -187,7 +187,7 @@ class Task implements Runnable {
         	try {
         		
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			caches[cacheNum].verifyAccount();
+        			caches[cacheNum].verifyAccount(caches[cacheNum].getInitialValue());
         		}
         		
         	} catch (TransactionAbortException e) {
@@ -195,7 +195,10 @@ class Task implements Runnable {
         		continue;
         	}
         	for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        		caches[cacheNum].write();
+        		
+        		if (caches[cacheNum].isWritten()){
+        			caches[cacheNum].write(rhs);
+        		}
         	}
         	closeOpenAccounts();
         	
