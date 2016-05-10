@@ -7,21 +7,31 @@ import java.util.concurrent.*;
 
 class Cache {
 	Account acc;
-	private int initValue = 0;
+	private int initialValue;
+	private int currentValue;
 	private boolean isItRead;
 	private boolean isItWritten;
-	private int current;
 	
 	public Cache(Account a) {
 		acc = a;
-		initValue = a.peek();
+		initialValue = a.peek();
 		isItRead = false;
 		isItWritten = false;
-		current = initValue;
+		currentValue = initialValue;
 	}
 	
+	// If a Cache is marked for reading or writing, its Account is opened appropriately.
 	public void openIfNeeded() throws TransactionAbortException {
-		acc.open(false);	
+		if (isItRead) {
+			acc.open(false);
+		}
+		if (isItWritten) {
+			acc.open(true);
+		}
+	}
+	
+	public void verifyAccount(int expectedValue) throws TransactionAbortException {
+		acc.verify(expectedValue);
 	}
 	
 	public void closeAccount() {
@@ -38,28 +48,33 @@ class Cache {
 	}
 	
 	public void write(int value) {
-		current = value;
+		currentValue = value;
 	}
 	
-	public void openForReading() {
+	public void markForReading() {
 		isItRead = true;
 	}
 	
-	public void openForWriting() {
+	public void markForWriting() {
 		isItWritten = true;
+	}
+	
+	public int getCurrentValue() {
+		return currentValue;
+	}
+	
+	public int getInitialValue() {
+		return initialValue;
 	}
 }
 
-// TO DO: Task is currently an ordinary class.
-// You will need to modify it to make it a task,
-// so it can be given to an Executor thread pool.
-//
 class Task implements Runnable {
     private static final int A = constants.A;
     private static final int Z = constants.Z;
     private static final int numLetters = constants.numLetters;
 
     private Account[] accounts;
+    private Cache[] caches;
     private String transaction;
 
     // TO DO: The sequential version of Task peeks at accounts
@@ -70,51 +85,13 @@ class Task implements Runnable {
     // you want to do, (1) open all accounts you need, for reading,
     // writing, or both, (2) verify all previously peeked-at values,
     // (3) perform all updates, and (4) close all opened accounts.
-    
-    /*
-     * Cache = copy of account object
-     * CACHE IS SEPARATE CLASS!!!!
-     * One field is pointer to account to account
-     * int readvalue
-     * boolean isitread
-     * boolean isitwritten
-     * int value
-     * 
-     * Functions:
-     * 
-     * openIfNeeded():
-     * If account is open for writing, ope
-     * Create cache objects in run!!!!
-     * Code stays the same, we just manipulate cache instead of account
-     * 
-     * 
-     * 
-     * Two phase commit
-     * Phase 1: open all accounts, "climbing phase"
-     * within try block
-     * for (i = A; i <= Zl; i++) {
-     * 		C[i].openIfNeeded();
-     * }
-     * catch exception
-     * if exception is caught, conflict at letter L, 
-     * close all accounts at L, clean_up() method, continue
-     * 
-     * Phase 2: Verify phase
-     * Releasing all the locks
-     * If verification fails, cleanup, continue, do phase 1 all over again
-     * 
-     * Phase 3: Write and close, cannot fail!!!
-     * Then break out of loop
-     * 
-     * EACH THREAD HAS ITS OWN CACHE
-     * 
-     * 
-     * Thread pool creates thread for us
-     * schedlue task by calling execute
-     */
 
     public Task(Account[] allAccounts, String trans) {
         accounts = allAccounts;
+        // Create a cache to wrap each account.
+        for (int accountNum = 0; accountNum < allAccounts.length; accountNum++) {
+        	caches[accountNum] = new Cache(allAccounts[accountNum]);
+        }
         transaction = trans;
     }
     
@@ -124,14 +101,12 @@ class Task implements Runnable {
         int accountNum = (int) (name.charAt(0)) - (int) 'A';
         if (accountNum < A || accountNum > Z)
             throw new InvalidTransactionError();
-        Account a = accounts[accountNum];
         for (int i = 1; i < name.length(); i++) {
             if (name.charAt(i) != '*')
                 throw new InvalidTransactionError();
             accountNum = (accounts[accountNum].peek() % numLetters);
-            a = accounts[accountNum];
         }
-        return new Cache(a);
+        return caches[accountNum];
     }
 
     private int parseAccountOrNum(String name) {
@@ -145,13 +120,10 @@ class Task implements Runnable {
     }
 
     public void run() {
-        // tokenize transaction
-    	
-    	// do a while true loop for everything in run
-    	// then do same as before but write on cache
-    	
+    	// tokenize transaction
         String[] commands = transaction.split(";");
 
+        // Parse each command in the transaction.
         for (int i = 0; i < commands.length; i++) {
             String[] words = commands[i].trim().split("\\s");
             if (words.length < 3)
@@ -168,84 +140,43 @@ class Task implements Runnable {
                 else
                     throw new InvalidTransactionError();
             }
-            
-            
+            lhs.markForWriting();
+            // Mark each read Cache for reading.
+            for (int wordNum = 2; wordNum < words.length; wordNum++) {
+            	String word = words[wordNum];
+            	// word is not an operator
+                if ((!(word.equals("=") || word.equals("+") || word.equals("-"))) &&
+                		// word does not begin with a digit
+                		(!(word.charAt(0) >= '0' && word.charAt(0) <= '9'))) {
+                	Cache cacheRead = parseAccount(word);
+                	cacheRead.markForReading();
+                }
+            }
         }
-        
-        /*
-         * I've added some of the basic logic here but I'm still
-         * confused about how to create the Cache array she mentioned
-         * In office hours. Going to send an email, hopefully 
-         * someone responds...
-         */
-        
-        Cache[] caches = new Cache[accounts.length];
-        
-        //////////////////////////////
-        /// MAIN LOOP ////////////////
-        //////////////////////////////
         
         while (true) {
-        
-	        //
-	        // Phase 1: Opening all caches for reading
-	        //
-	        
-	        // try to open all caches
-	    	int c0 = 0;
-	    	while (c0 < caches.length) {
-	    		
-	    		try {
-	    			caches[c0].openIfNeeded();
-	    		} catch (TransactionAbortException e) {
-	    			break;
-	    		}
-	    		c0++;
-	    	}
-	    	
-	    	// if exception is thrown, close all previos account
-	    	for (int i0 = 0; i0 < c0; i0++) {
-	    		caches[i0].closeAccount();
-	    	}
-	    	if (c0 != caches.length) {
-	    		continue;
-	    	}
-	    	
-	    	//
-	        // Phase 2: Verifying all caches
-	        //
-	        
-	        // try to open all caches
-	    	int c1 = 0;
-	    	while (c1 < caches.length) {
-	    		try {
-	    			caches[c1].verifyAccount();
-	    		} catch (TransactionAbortException e) {
-	    			break;
-	    		}
-	    		c1++;
-	    	}
-	    	
-	    	// if exception is thrown, close all previos account
-	    	for (int i1 = 0; i1 < c1; i1++) {
-	    		caches[i1].closeAccount();
-	    	}
-	    	if (c1 != caches.length) {
-	    		continue;
-	    	}
-	    	
-	    	//
-	    	// Phase 3: Opening all accounts for writing
-	    	//
-	    	
-	    	// open, write to, and close all accounts
-	    	for (int c2 = 0; c2 < caches.length; c2++) {
-	    		
-	    		caches[c2].write(rhs); // i think this is correct?
-	    		caches[c2].closeAccount();
-	    	}
-	    	break;
+        	// TODO: Carry out transactions in local cache.
+        	
+        	// TODO: Phase 1: Open all read/written accounts in global accounts array. 
+        	try {
+        		
+        	} catch (TransactionAbortException e) {
+        		// TODO: Close all open accounts.
+        		continue;
+        	}
+        	// TODO: Phase 2: Verify that all opened accounts have the correct values.  
+        	try {
+        		
+        	} catch (TransactionAbortException e) {
+        		// TODO: Close all open accounts.
+        		continue;
+        	}
+        	// TODO: Write to all accounts written to.
+        	// TODO: Close all open accounts.
+        	
+        	break;	// Success! Output successful-write message.
         }
+        
         System.out.println("commit: " + transaction);
     }
 }
