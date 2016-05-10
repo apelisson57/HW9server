@@ -30,10 +30,6 @@ class Cache {
 		}
 	}
 	
-	public void verifyAccount(int expectedValue) throws TransactionAbortException {
-		acc.verify(expectedValue);
-	}
-	
 	public void closeAccount() {
 		acc.close();
 	}
@@ -173,31 +169,29 @@ class Task implements Runnable {
         }
         
         while (true) {
+        	// TODO Phase 1: Open all read/written accounts in global accounts array.
         	try {
-        		
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			caches[cacheNum].openIfNeeded();
+        			caches[cacheNum].openIfNeeded(); // should open accounts[...]
         		}
-        		
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
         		continue;
         	}
-        	 
+        	// Phase 2: Verify that all opened Accounts have the correct values.
         	try {
-        		
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			caches[cacheNum].verifyAccount(caches[cacheNum].getInitialValue());
+        			accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
         		}
-        		
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
         		continue;
         	}
+        	// Write to all accounts written to.
         	for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        		
-        		if (caches[cacheNum].isWritten()){
-        			caches[cacheNum].write(rhs);
+        		Cache someCache = caches[cacheNum];
+        		if (someCache.isWritten()) {
+        			accounts[cacheNum].update(someCache.getCurrentValue());
         		}
         	}
         	closeOpenAccounts();
