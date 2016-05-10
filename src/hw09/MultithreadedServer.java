@@ -155,7 +155,10 @@ class Task implements Runnable {
                 else
                     throw new InvalidTransactionError();
             }
+            // Carry out each command in the local cache.
             lhs.markForWriting();
+            lhs.write(rhs);
+            
             // Mark each read Cache for reading.
             for (int wordNum = 2; wordNum < words.length; wordNum++) {
             	String word = words[wordNum];
@@ -170,8 +173,6 @@ class Task implements Runnable {
         }
         
         while (true) {
-        	// TODO: Carry out transactions in local cache.
-        	
         	// TODO: Phase 1: Open all read/written accounts in global accounts array. 
         	try {
         		
