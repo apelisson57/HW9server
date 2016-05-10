@@ -123,8 +123,15 @@ class Task implements Runnable {
         return rtn;
     }
     
-    public void closeAllAccounts() {
-    	
+    //	Cleanup method. All Accounts read from or written to in the cache are closed.  
+    //
+    public void closeOpenAccounts() {
+    	for (int accountNum = A; accountNum < numLetters; accountNum++) {
+    		Cache accountCache = caches[accountNum];
+    		if (accountCache.isRead() || accountCache.isWritten()) {
+    			accounts[accountNum].close();
+    		}
+    	}
     }
 
     public void run() {
@@ -169,18 +176,18 @@ class Task implements Runnable {
         	try {
         		
         	} catch (TransactionAbortException e) {
-        		// TODO: Close all open accounts.
+        		closeOpenAccounts();
         		continue;
         	}
         	// TODO: Phase 2: Verify that all opened accounts have the correct values.  
         	try {
         		
         	} catch (TransactionAbortException e) {
-        		// TODO: Close all open accounts.
+        		closeOpenAccounts();
         		continue;
         	}
         	// TODO: Write to all accounts written to.
-        	// TODO: Close all open accounts.
+        	closeOpenAccounts();
         	
         	break;	// Success! Output successful-write message.
         }
