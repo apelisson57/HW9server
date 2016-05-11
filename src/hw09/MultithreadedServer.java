@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.concurrent.*;
 
 class Cache {
-	Account acc;
+	private Account acc;
 	private int initialValue;
 	private int currentValue;
 	private boolean isItRead;
@@ -14,17 +14,13 @@ class Cache {
 	
 	public Cache(Account a) {
 		acc = a;
-		initialValue = a.peek();
+		initialValue = 0;
 		isItRead = false;
 		isItWritten = false;
 		currentValue = initialValue;
 	}
 	
-	public void closeAccount() {
-		acc.close();
-	}
-	
-	public int peekAccount() {
+	public int peekAccount() throws TransactionUsageError {
 		return acc.peek();
 	}
 	
@@ -46,6 +42,10 @@ class Cache {
 	
 	public int getInitialValue() {
 		return initialValue;
+	}
+	
+	public void setInitialValue() {
+		initialValue = acc.peek();
 	}
 	
 	public boolean isRead() {
@@ -77,7 +77,7 @@ class Task implements Runnable {
 
     public Task(Account[] allAccounts, String trans) {
         accounts = allAccounts;
-        caches = new Cache[numLetters];
+        caches = new Cache[accounts.length];
         // Create a cache to wrap each account.
         for (int accountNum = 0; accountNum < allAccounts.length; accountNum++) {
         	caches[accountNum] = new Cache(allAccounts[accountNum]);
@@ -104,7 +104,7 @@ class Task implements Runnable {
         if (name.charAt(0) >= '0' && name.charAt(0) <= '9') {
             rtn = new Integer(name).intValue();
         } else {
-            rtn = parseAccount(name).peekAccount();
+        	rtn = parseAccount(name).peekAccount();
         }
         return rtn;
     }
@@ -133,7 +133,7 @@ class Task implements Runnable {
 	}
 
     public void run() {      
-        while (true) {
+        while (true) { 
         	// tokenize transaction
             String[] commands = transaction.split(";");
 
@@ -167,6 +167,7 @@ class Task implements Runnable {
                     		(!(word.charAt(0) >= '0' && word.charAt(0) <= '9'))) {
                     	Cache cacheRead = parseAccount(word);
                     	cacheRead.markForReading();
+                    	cacheRead.setInitialValue();
                     }
                 }
             }
@@ -182,7 +183,9 @@ class Task implements Runnable {
         	// Verify that all opened Accounts have the correct values.
         	try {
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
+        			if (caches[cacheNum].isRead()) {
+        				accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
+        			}
         		}
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
@@ -218,12 +221,17 @@ public class MultithreadedServer {
 
         // Create an Executor and then feed tasks to the executor instead of running them directly. 
         
-        Executor e = Executors.newCachedThreadPool();
+        ExecutorService e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
+        
+        e.shutdown();
+        try {
+             e.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {}
         
         input.close();
     }
