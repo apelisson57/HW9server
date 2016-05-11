@@ -20,20 +20,9 @@ class Cache {
 		currentValue = initialValue;
 	}
 	
-	// If a Cache is marked for reading or writing, its Account is opened appropriately.
-	public void openIfNeeded() throws TransactionAbortException {
-		if (isItRead) {
-			acc.open(false);
-		}
-		if (isItWritten) {
-			acc.open(true);
-		}
-	}
-	
 	public void closeAccount() {
 		acc.close();
 	}
-
 	
 	public int peekAccount() {
 		return acc.peek();
@@ -88,6 +77,7 @@ class Task implements Runnable {
 
     public Task(Account[] allAccounts, String trans) {
         accounts = allAccounts;
+        caches = new Cache[numLetters];
         // Create a cache to wrap each account.
         for (int accountNum = 0; accountNum < allAccounts.length; accountNum++) {
         	caches[accountNum] = new Cache(allAccounts[accountNum]);
@@ -129,56 +119,67 @@ class Task implements Runnable {
     		}
     	}
     }
+    
+	// If a Cache is marked for reading or writing, its Account is opened appropriately.
+	public void openIfNeeded(int accountNum) throws TransactionAbortException {
+		Cache currentCache = caches[accountNum];
+		Account currentAccount = accounts[accountNum];
+		if (currentCache.isRead()) {
+			currentAccount.open(false);
+		}
+		if (currentCache.isWritten()) {
+			currentAccount.open(true);
+		}
+	}
 
-    public void run() {
-    	// tokenize transaction
-        String[] commands = transaction.split(";");
+    public void run() {      
+        while (true) {
+        	// tokenize transaction
+            String[] commands = transaction.split(";");
 
-        // Parse each command in the transaction.
-        for (int i = 0; i < commands.length; i++) {
-            String[] words = commands[i].trim().split("\\s");
-            if (words.length < 3)
-                throw new InvalidTransactionError();
-            Cache lhs = parseAccount(words[0]);
-            if (!words[1].equals("="))
-                throw new InvalidTransactionError();
-            int rhs = parseAccountOrNum(words[2]);
-            for (int j = 3; j < words.length; j+=2) {
-                if (words[j].equals("+"))
-                    rhs += parseAccountOrNum(words[j+1]);
-                else if (words[j].equals("-"))
-                    rhs -= parseAccountOrNum(words[j+1]);
-                else
+            // Parse each command in the transaction.
+            for (int i = 0; i < commands.length; i++) {
+                String[] words = commands[i].trim().split("\\s");
+                if (words.length < 3)
                     throw new InvalidTransactionError();
-            }
-            // Carry out each command in the local cache.
-            lhs.markForWriting();
-            lhs.write(rhs);
-            
-            // Mark each read Cache for reading.
-            for (int wordNum = 2; wordNum < words.length; wordNum++) {
-            	String word = words[wordNum];
-            	// word is not an operator
-                if ((!(word.equals("=") || word.equals("+") || word.equals("-"))) &&
-                		// word does not begin with a digit
-                		(!(word.charAt(0) >= '0' && word.charAt(0) <= '9'))) {
-                	Cache cacheRead = parseAccount(word);
-                	cacheRead.markForReading();
+                Cache lhs = parseAccount(words[0]);
+                if (!words[1].equals("="))
+                    throw new InvalidTransactionError();
+                int rhs = parseAccountOrNum(words[2]);
+                for (int j = 3; j < words.length; j+=2) {
+                    if (words[j].equals("+"))
+                        rhs += parseAccountOrNum(words[j+1]);
+                    else if (words[j].equals("-"))
+                        rhs -= parseAccountOrNum(words[j+1]);
+                    else
+                        throw new InvalidTransactionError();
+                }
+                // Carry out each command in the local cache.
+                lhs.markForWriting();
+                lhs.write(rhs);
+                
+                // Mark each read Cache for reading.
+                for (int wordNum = 2; wordNum < words.length; wordNum++) {
+                	String word = words[wordNum];
+                	// word is not an operator
+                    if ((!(word.equals("=") || word.equals("+") || word.equals("-"))) &&
+                    		// word does not begin with a digit
+                    		(!(word.charAt(0) >= '0' && word.charAt(0) <= '9'))) {
+                    	Cache cacheRead = parseAccount(word);
+                    	cacheRead.markForReading();
+                    }
                 }
             }
-        }
-        
-        while (true) {
-        	// TODO Phase 1: Open all read/written accounts in global accounts array.
+        	// Phase 1: Open all read/written accounts in global accounts array.
         	try {
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			caches[cacheNum].openIfNeeded(); // should open accounts[...]
+        			openIfNeeded(cacheNum);
         		}
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
         		continue;
         	}
-        	// Phase 2: Verify that all opened Accounts have the correct values.
+        	// Verify that all opened Accounts have the correct values.
         	try {
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
         			accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
@@ -187,7 +188,7 @@ class Task implements Runnable {
         		closeOpenAccounts();
         		continue;
         	}
-        	// Write to all accounts written to.
+        	// Phase 2: Write to all accounts written to.
         	for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
         		Cache someCache = caches[cacheNum];
         		if (someCache.isWritten()) {
