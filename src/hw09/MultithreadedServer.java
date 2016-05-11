@@ -136,7 +136,9 @@ class Task implements Runnable {
     public void run() {      
         while (true) {
         	// tokenize transaction
+        	
             String[] commands = transaction.split(";");
+
 
             // Parse each command in the transaction.
             for (int i = 0; i < commands.length; i++) {
@@ -145,7 +147,7 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
                 Cache lhs = parseAccount(words[0]);
                 if (!words[1].equals("="))
-                    throw new InvalidTransactionError();
+                	throw new InvalidTransactionError();
                 int rhs = parseAccountOrNum(words[2]);
                 for (int j = 3; j < words.length; j+=2) {
                     if (words[j].equals("+"))
@@ -155,6 +157,7 @@ class Task implements Runnable {
                     else
                         throw new InvalidTransactionError();
                 }
+
                 // Carry out each command in the local cache.
                 lhs.markForWriting();
                 lhs.write(rhs);
@@ -190,7 +193,9 @@ class Task implements Runnable {
             int cacheNum2 = 0;
             while (cacheNum2 < numLetters) {
             	try {
-            		accounts[cacheNum2].verify(caches[cacheNum2].getInitialValue()); 	    			
+            		if (caches[cacheNum2].isRead()) {
+            			accounts[cacheNum2].verify(caches[cacheNum2].getInitialValue());
+            		}		 	    			
 	        	} catch (TransactionAbortException e) {
 	        		break;
 	        	}
@@ -210,10 +215,15 @@ class Task implements Runnable {
         	}
         	closeOpenAccounts(numLetters);
         	
+        	//if (transaction == "Z = Z + 1") {
+        	//System.out.println(transaction);
+        	//}
+        	
         	break;	// Success! Output successful-write message.
         }
-        
-        System.out.println("commit: " + transaction);
+        if (transaction == "Z = Z + 1") {
+        	System.out.println("commit: " + transaction);
+        }
     }
 }
 
@@ -230,14 +240,18 @@ public class MultithreadedServer {
             new BufferedReader(new FileReader(inputFile));
 
         // Create an Executor and then feed tasks to the executor instead of running them directly. 
-        
-        Executor e = Executors.newCachedThreadPool();
+        ExecutorService e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
         	Task t = new Task(accounts, line);
         	e.execute(t);
         }
         
+        e.shutdown();
+        try {
+        	 e.awaitTermination(60, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {}
+       
         input.close();
     }
 }
