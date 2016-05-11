@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.concurrent.*;
+import java.util.Random;
 
 class Cache {
 	private Account acc;
@@ -62,9 +63,10 @@ class Task implements Runnable {
     private static final int Z = constants.Z;
     private static final int numLetters = constants.numLetters;
 
-    private Account[] accounts;
-    private Cache[] caches;
+    private Account[] accounts; /* shared mutable state */
+    private Cache[] caches; 
     private String transaction;
+    private Random rand;
 
     // TO DO: The sequential version of Task peeks at accounts
     // whenever it needs to get a value, and opens, updates, and closes
@@ -82,6 +84,7 @@ class Task implements Runnable {
         for (int accountNum = 0; accountNum < allAccounts.length; accountNum++) {
         	caches[accountNum] = new Cache(allAccounts[accountNum]);
         }
+        rand = new Random(System.currentTimeMillis());
         transaction = trans;
     }
     
@@ -140,6 +143,12 @@ class Task implements Runnable {
 		}
 		
 	}
+	
+	// Sleep for a random amount of time, specific to each task
+	public void randomSleep() throws InterruptedException {
+		Thread.sleep(rand.nextInt(50)*100);
+	}
+
 
     public void run() {      
         while (true) { 
@@ -193,6 +202,9 @@ class Task implements Runnable {
 	        }
             if (cacheNum1 < numLetters) {
             	closeOpenAccounts(cacheNum1);
+            	try {
+            		randomSleep();
+            	} catch (InterruptedException ex) {}
             	continue;
             }
         
@@ -210,6 +222,9 @@ class Task implements Runnable {
 	        }
             if (cacheNum2 < numLetters) {
             	closeOpenAccounts(cacheNum2);
+            	try {
+            		randomSleep();
+            	} catch (InterruptedException ex) {}
             	continue;
             }
 
@@ -251,7 +266,7 @@ public class MultithreadedServer {
         
         e.shutdown();
         try {
-             e.awaitTermination(60, TimeUnit.SECONDS);
+             e.awaitTermination(10, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
         	System.out.println("ExecutorService deadlocked for 60 seconds");
         }
