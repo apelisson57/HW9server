@@ -94,7 +94,12 @@ class Task implements Runnable {
         for (int i = 1; i < name.length(); i++) {
             if (name.charAt(i) != '*')
                 throw new InvalidTransactionError();
-            accountNum = (accounts[accountNum].peek() % numLetters);
+            Cache someCache = caches[accountNum];
+            // If the Cache pointed to with indirection was previously written to,
+            // make sure the indirect performs modulo on the current value.
+            // Otherwise, use the account's original value.
+            accountNum = someCache.isWritten() ? someCache.getCurrentValue() : someCache.peekAccount();
+            accountNum %= numLetters;
         }
         return caches[accountNum];
     }
@@ -104,7 +109,10 @@ class Task implements Runnable {
         if (name.charAt(0) >= '0' && name.charAt(0) <= '9') {
             rtn = new Integer(name).intValue();
         } else {
-        	rtn = parseAccount(name).peekAccount();
+        	Cache someCache = parseAccount(name);
+        	// If this cached account was written to in a previous command, return its the current value.
+        	// Otherwise, return the account's original value. 
+        	rtn = someCache.isWritten() ? someCache.getCurrentValue() : someCache.peekAccount();
         }
         return rtn;
     }
@@ -135,10 +143,8 @@ class Task implements Runnable {
 
     public void run() {      
         while (true) { 
-        	// tokenize transaction
-        	
+        	// tokenize transaction        	
             String[] commands = transaction.split(";");
-
 
             // Parse each command in the transaction.
             for (int i = 0; i < commands.length; i++) {
@@ -216,6 +222,7 @@ class Task implements Runnable {
         	}
         	closeOpenAccounts(numLetters);
         	
+        	//System.out.println("commit: " + transaction); //TODO debug
         	break;	// Success! Output successful-write message.
         }
  
@@ -245,7 +252,9 @@ public class MultithreadedServer {
         e.shutdown();
         try {
              e.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {}
+        } catch (InterruptedException ex) {
+        	System.out.println("ExecutorService deadlocked for 60 seconds");
+        }
        
         input.close();
     }
