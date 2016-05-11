@@ -110,9 +110,9 @@ public class MultithreadedServerTests extends TestCase {
          accounts[1] = new Account(0);   // B = 0
          accounts[3] = new Account(14);  // D = 14
          accounts[7] = new Account(29);  // H = 29
-         accounts[12] = new Account(7);  // M = 7
+         accounts[12] = new Account(12);  // M = 12
          accounts[14] = new Account(9);  // O = 9
-         accounts[21] = new Account(12); // V = 13
+         accounts[21] = new Account(12); // V = 12
          
          MultithreadedServer.runServer("src/hw09/data/lhsReference", accounts);
          
@@ -121,9 +121,9 @@ public class MultithreadedServerTests extends TestCase {
          assertEquals("Account B differs",0,accounts[1].getValue());
          assertEquals("Account D differs",14,accounts[3].getValue());
          assertEquals("Account H differs",29,accounts[7].getValue());
-         assertEquals("Account M differs",29,accounts[12].getValue());
-         assertEquals("Account O differs",22,accounts[14].getValue());
-         assertEquals("Account V differs",13,accounts[21].getValue());
+         assertEquals("Account M differs",76,accounts[12].getValue());
+         assertEquals("Account O differs",21,accounts[14].getValue());
+         assertEquals("Account V differs",12,accounts[21].getValue());
     	 
      }
 
