@@ -111,8 +111,8 @@ class Task implements Runnable {
     
     //	Cleanup method. All Accounts read from or written to in the cache are closed.  
     //
-    public void closeOpenAccounts() {
-    	for (int accountNum = A; accountNum < numLetters; accountNum++) {
+    public void closeOpenAccounts(int cacheNum) {
+    	for (int accountNum = A; accountNum < cacheNum; accountNum++) {
     		Cache accountCache = caches[accountNum];
     		if (accountCache.isRead() || accountCache.isWritten()) {
     			accounts[accountNum].close();
@@ -130,12 +130,15 @@ class Task implements Runnable {
 		if (currentCache.isWritten()) {
 			currentAccount.open(true);
 		}
+		
 	}
 
     public void run() {      
         while (true) { 
         	// tokenize transaction
+        	
             String[] commands = transaction.split(";");
+
 
             // Parse each command in the transaction.
             for (int i = 0; i < commands.length; i++) {
@@ -144,7 +147,7 @@ class Task implements Runnable {
                     throw new InvalidTransactionError();
                 Cache lhs = parseAccount(words[0]);
                 if (!words[1].equals("="))
-                    throw new InvalidTransactionError();
+                	throw new InvalidTransactionError();
                 int rhs = parseAccountOrNum(words[2]);
                 for (int j = 3; j < words.length; j+=2) {
                     if (words[j].equals("+"))
@@ -154,6 +157,7 @@ class Task implements Runnable {
                     else
                         throw new InvalidTransactionError();
                 }
+
                 // Carry out each command in the local cache.
                 lhs.markForWriting();
                 lhs.write(rhs);
@@ -172,38 +176,49 @@ class Task implements Runnable {
                 }
             }
         	// Phase 1: Open all read/written accounts in global accounts array.
-        	try {
-        		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			openIfNeeded(cacheNum);
-        		}
-        	} catch (TransactionAbortException e) {
-        		closeOpenAccounts();
-        		continue;
-        	}
+            int cacheNum1 = 0;
+            while (cacheNum1 < numLetters) {
+            	try {
+        			openIfNeeded(cacheNum1);   	    			
+	        	} catch (TransactionAbortException e) {
+	        		break;
+	        	}
+            	cacheNum1++;
+	        }
+            if (cacheNum1 < numLetters) {
+            	closeOpenAccounts(cacheNum1);
+            	continue;
+            }
+        
         	// Verify that all opened Accounts have the correct values.
-        	try {
-        		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			if (caches[cacheNum].isRead()) {
-        				accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
-        			}
-        		}
-        	} catch (TransactionAbortException e) {
-        		closeOpenAccounts();
-        		continue;
-        	}
+            int cacheNum2 = 0;
+            while (cacheNum2 < numLetters) {
+            	try {
+            		if (caches[cacheNum2].isRead()) {
+            			accounts[cacheNum2].verify(caches[cacheNum2].getInitialValue());
+            		}		 	    			
+	        	} catch (TransactionAbortException e) {
+	        		break;
+	        	}
+            	cacheNum2++;
+	        }
+            if (cacheNum2 < numLetters) {
+            	closeOpenAccounts(cacheNum2);
+            	continue;
+            }
+
         	// Phase 2: Write to all accounts written to.
-        	for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        		Cache someCache = caches[cacheNum];
+        	for (int cacheNum3 = 0; cacheNum3 < numLetters; cacheNum3++) {
+        		Cache someCache = caches[cacheNum3];
         		if (someCache.isWritten()) {
-        			accounts[cacheNum].update(someCache.getCurrentValue());
+        			accounts[cacheNum3].update(someCache.getCurrentValue());
         		}
         	}
-        	closeOpenAccounts();
+        	closeOpenAccounts(numLetters);
         	
         	break;	// Success! Output successful-write message.
         }
-        
-        System.out.println("commit: " + transaction);
+ 
     }
 }
 
@@ -220,7 +235,6 @@ public class MultithreadedServer {
             new BufferedReader(new FileReader(inputFile));
 
         // Create an Executor and then feed tasks to the executor instead of running them directly. 
-        
         ExecutorService e = Executors.newCachedThreadPool();
 
         while ((line = input.readLine()) != null) {
@@ -232,7 +246,7 @@ public class MultithreadedServer {
         try {
              e.awaitTermination(60, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {}
-        
+       
         input.close();
     }
 }
