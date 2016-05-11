@@ -41,7 +41,7 @@ public class MultithreadedServerTests extends TestCase {
 		accounts = new Account[numLetters];
 		for (int i = A; i <= Z; i++) {
 			accounts[i] = new Account(Z-i);
-		}			 
+		}
 		
 		MultithreadedServer.runServer("src/hw09/data/increment", accounts);
 	
@@ -52,8 +52,27 @@ public class MultithreadedServerTests extends TestCase {
 		}		
 
 	 }
-	 	  	 
+     
      @Test
+     public void testRotate() throws IOException {
+ 		// initialize accounts 
+ 		accounts = new Account[numLetters];
+ 		for (int i = A; i <= Z; i++) {
+ 			accounts[i] = new Account(i);
+ 		}
+ 		
+ 		MultithreadedServer.runServer("src/hw09/data/rotate", accounts);
+ 		
+		// assert correct account values
+		for (int i = A; i <= Z - 2; i++) {
+			Character c = new Character((char) (i+'A'));
+			assertEquals("Account "+c+" differs",2*i+3,accounts[i].getValue()); // A-X should be 3, 5, ... 47, 49
+		}
+		assertEquals("Account Y differs",28,accounts[Z - 1].getValue());
+		assertEquals("Account Z differs",8,accounts[Z].getValue());
+     }
+	 	  	 
+     /*@Test
      public void testDoubleIndirection() throws IOException {
          // initialize accounts
          accounts = new Account[numLetters];
@@ -73,5 +92,5 @@ public class MultithreadedServerTests extends TestCase {
          assertEquals("Account J differs",42,accounts[9].getValue());
          assertEquals("Account L differs",5,accounts[11].getValue());
          assertEquals("Account Q differs",37,accounts[16].getValue());
-     }
+     }*/
 }
