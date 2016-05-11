@@ -2,5 +2,5 @@ A = A - 1
 B = B - 1
 C = C - 1
 D = E - F; E = D - F
-F = C* - A*
+I = G* - H*
 E** = B - D
