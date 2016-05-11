@@ -182,7 +182,9 @@ class Task implements Runnable {
         	// Verify that all opened Accounts have the correct values.
         	try {
         		for (int cacheNum = 0; cacheNum < numLetters; cacheNum++) {
-        			accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
+        			if (caches[cacheNum].isRead()) {
+        				accounts[cacheNum].verify(caches[cacheNum].getInitialValue());
+        			}
         		}
         	} catch (TransactionAbortException e) {
         		closeOpenAccounts();
