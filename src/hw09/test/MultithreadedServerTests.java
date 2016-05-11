@@ -33,7 +33,7 @@ public class MultithreadedServerTests extends TestCase {
 	    }
 	 }    
      
-     /*   
+  //   /*   
      @Test
 	 public void testIncrement() throws IOException {
 	
@@ -43,7 +43,7 @@ public class MultithreadedServerTests extends TestCase {
 			accounts[i] = new Account(Z-i);
 		}
 		
-		MultithreadedServer.runServer("src/hw09/data/increment", accounts);
+		MultithreadedServer.runServer("hw09/data/increment", accounts);
 	
 		// assert correct account values
 		for (int i = A; i <= Z; i++) {
@@ -52,7 +52,7 @@ public class MultithreadedServerTests extends TestCase {
 		}		
 
 	 }
-	 */
+//	 */
      
      
      @Test
@@ -63,7 +63,7 @@ public class MultithreadedServerTests extends TestCase {
  			accounts[i] = new Account(i);
  		}
  		
- 		MultithreadedServer.runServer("src/hw09/data/rotate", accounts);
+ 		MultithreadedServer.runServer("hw09/data/rotate", accounts);
  		
 		// assert correct account values
 		for (int i = A; i <= Z - 2; i++) {
@@ -76,7 +76,7 @@ public class MultithreadedServerTests extends TestCase {
      
 	 	  	 
 
-     /*
+ //    /*
      @Test
      public void testDoubleIndirection() throws IOException {
          // initialize accounts
@@ -88,7 +88,7 @@ public class MultithreadedServerTests extends TestCase {
          accounts[11] = new Account(5);  // L = 5
          accounts[16] = new Account(37); // Q = 37
          
-         MultithreadedServer.runServer("src/hw09/data/doubleIndirection", accounts);
+         MultithreadedServer.runServer("hw09/data/doubleIndirection", accounts);
          
          // assert correct account values
          assertEquals("Account A differs",9,accounts[0].getValue());
@@ -98,10 +98,10 @@ public class MultithreadedServerTests extends TestCase {
          assertEquals("Account L differs",5,accounts[11].getValue());
          assertEquals("Account Q differs",37,accounts[16].getValue());
      }
-     */
+ //    */
      
      
-     /*
+  //   /*
      @Test
      public void testLHSReference() throws IOException {
     	 // initialize accounts
@@ -114,7 +114,7 @@ public class MultithreadedServerTests extends TestCase {
          accounts[14] = new Account(9);  // O = 9
          accounts[21] = new Account(12); // V = 12
          
-         MultithreadedServer.runServer("src/hw09/data/lhsReference", accounts);
+         MultithreadedServer.runServer("hw09/data/lhsReference", accounts);
          
          // assert correct account values
          assertEquals("Account A differs",47,accounts[0].getValue());
@@ -127,9 +127,9 @@ public class MultithreadedServerTests extends TestCase {
     	 
      }
 
-     */
+  //   */
      
-     /*
+  //   /*
      @Test
      public void testVerifyTransactionAbortException() throws IOException {
  	 // initialize accounts
@@ -140,7 +140,7 @@ public class MultithreadedServerTests extends TestCase {
  	 accounts[3] = new Account(7);   // D = 7
  	 accounts[4] = new Account(12);  // E = 12
  	
- 	 MultithreadedServer.runServer("src/hw09/data/verifyTranscationAbortError", accounts);
+ 	 MultithreadedServer.runServer("hw09/data/verifyTransactionAbortError", accounts);
      
       // assert correct account values
       assertEquals("Account A differs",34,accounts[0].getValue());
@@ -150,8 +150,8 @@ public class MultithreadedServerTests extends TestCase {
       assertEquals("Account E differs",12,accounts[4].getValue());
 
      }
-     */
-     /*
+   //  */
+  //   /*
      @Test
      public void testSubtraction() throws IOException {
 		 // initialize accounts
@@ -167,7 +167,7 @@ public class MultithreadedServerTests extends TestCase {
 	 	 accounts[8] = new Account(3);   // I = 3
 	  	 
 	  	
-	  	 MultithreadedServer.runServer("src/hw09/data/subtraction", accounts);
+	  	 MultithreadedServer.runServer("hw09/data/subtraction", accounts);
 	      
 	     // assert correct account values
 	     assertEquals("Account A differs",11,accounts[0].getValue());
@@ -180,6 +180,6 @@ public class MultithreadedServerTests extends TestCase {
 	     assertEquals("Account H differs",6,accounts[7].getValue());
 	     assertEquals("Account I differs",3,accounts[8].getValue());
      }
-     */
+  //   */
 
 }
